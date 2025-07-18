@@ -9,6 +9,23 @@ class ContextService {
     static VDA := ""
     static Providers := Map()
 
+    static _cachedContext := Map(
+        "stable", "",
+        "active", "",
+        "volatile", ""
+    )
+    static _cacheTimestamps := Map(
+        "stable", 0,
+        "active", 0
+    )
+    static _cacheDurations := Map(
+        "stable", -1, ; -1 表示只通过事件失效
+        "active", 250 ; 活动层缓存有效期为 250ms
+    )
+
+    static _winEventHook := 0
+    static EVENT_SYSTEM_FOREGROUND := 0x0003
+
     static Init() {
         try {
             if FileExist(APP_LIB_DIR . "\VirtualDesktopAccessor.dll") {
@@ -17,6 +34,43 @@ class ContextService {
         } catch Error {
             this.VDA := ""
         }
+        this._winEventHook := DllCall("User32\SetWinEventHook",
+            "UInt", this.EVENT_SYSTEM_FOREGROUND,  ; eventMin
+            "UInt", this.EVENT_SYSTEM_FOREGROUND,  ; eventMax
+            "Ptr", 0,                             ; hmodWinEventProc
+            "Ptr", RegisterCallback(this._onForegroundChange.Bind(this), "F"), ; lpfnWinEventProc
+            "UInt", 0,                            ; idProcess
+            "UInt", 0,                            ; idThread
+            "UInt", 0)                            ; dwFlags (WINEVENT_OUTOFCONTEXT)
+    }
+
+    static Unhook() {
+        if (this._winEventHook) {
+            DllCall("User32\UnhookWinEvent", "Ptr", this._winEventHook)
+            this._winEventHook := 0
+        }
+    }
+
+    static _onForegroundChange(hWinEventHook, event, hwnd, idObject, idChild, dwEventThread, dwmsEventTime) {
+        this.InvalidateContext("all")
+    }
+
+    /**
+     * 公共接口：允许外部模块（特别是插件）按需失效缓存。
+     * @param scope {String} 要失效的范围, "all", "active", "volatile"。
+     */
+    static InvalidateContext(scope := "active") {
+        Switch scope {
+            Case "all":
+                this._cachedContext.stable := ""
+                this._cacheTimestamps.stable := 0
+            Case "active":
+                this._cachedContext.active := ""
+                this._cacheTimestamps.active := 0
+            Case "volatile":
+                ; 通常 volatile 层是即时生成的，但这里也提供一个接口
+                this._cachedContext.volatile := ""
+        }
     }
 
     static RegisterProvider(processName, providerFunc) {
@@ -24,72 +78,83 @@ class ContextService {
     }
 
     static GetContext() {
+        local now := A_TickCount
         local context := Map()
+        ; 稳定层上下文
+        if (this._cachedContext.stable && (this._cacheDurations.stable < 0 || now - this._cacheTimestamps.stable < this._cacheDurations.stable)) {
+            finalContext := this._cachedContext.stable.Clone()
+        } else {
+            local stable := Map()
+            local hwnd := WinActive("A")
+            stable['ActiveWindow'] := Map(
+                "hwnd", hwnd,
+                "class", WinGetClass("ahk_id " hwnd),
+                "processPath", WinGetProcessPath("ahk_id " hwnd),
+                "processName", WinGetProcessName("ahk_id " hwnd),
+                "monitor", MonitorManager.GetFromWindow(hwnd)
+            )
+            if (this.VDA) {
+                stable['VirtualDesktop'] := Map(
+                    "current", DllCall(this.VDA . "\GetCurrentDesktopNumber", "Int"),
+                    "isWinOnCurrent", DllCall(this.VDA . "\IsWindowOnCurrentVirtualDesktop", "Ptr", hwnd, "Int")
+                )
+            } else {
+                stable['VirtualDesktop'] := Map("current", 1, "isWinOnCurrent", true)
+            }
+            stable['Displays'] := Map(
+                "count", MonitorManager.GetAll().Length,
+                "all", MonitorManager.GetAll(),
+                "primary", MonitorManager.GetPrimary()
+            )
 
-        ; 活动窗口信息
-        local hwnd := WinActive("A")
-        context['ActiveWindow'] := Map(
-            "hwnd", hwnd,
-            "title", WinGetTitle("ahk_id " hwnd),
-            "class", WinGetClass("ahk_id " hwnd),
-            "processPath", WinGetProcessPath("ahk_id " hwnd),
-            "processName", WinGetProcessName("ahk_id " hwnd)
-        )
+            this._cachedContext.stable := stable
+            this._cacheTimestamps.stable := now
+            this.InvalidateContext("active")
+            finalContext := stable.Clone()
+        }
+        ; 活动层上下文
+        if (this._cachedContext.active && now - this._cacheTimestamps.active < this._cacheDurations.active) {
+            for k, v in this._cachedContext.active {
+                finalContext[k] := v}
+        } else {
+            local active := Map()
+            active.ActiveWindow.title := WinGetTitle("ahk_id " . finalContext.ActiveWindow.hwnd)
+            active['FocusedControl'] := Map(
+                "classNN", ControlGetFocus("A"),
+                "text", ControlGetText(ControlGetFocus("A"), "A"))
 
-        ; 鼠标对象信息
+            active["TextSources"] := TextEngineManager.GetTextSources()
+
+            ; 插件提供的上下文属于活动层
+            local processName := finalContext.ActiveWindow.processName
+            if (this.Providers.Has(processName)) {
+                try {
+                    local specificContext := this.Providers[processName](finalContext)
+                    for key, value in specificContext {
+                        active[key] := value
+                    }
+                } catch {
+                }
+            }
+
+            this._cachedContext.active := active
+            this._cacheTimestamps.active := now
+            this.InvalidateContext("volatile")
+            for k, v in active {
+                finalContext[k] := v
+            }
+        }
+        ; 实时层上下文
         local mouseX, mouseY, mouseHwnd, mouseControl
         MouseGetPos(&mouseX, &mouseY, &mouseHwnd, &mouseControl)
-        context['MouseTarget'] := Map(
+        finalContext['MouseTarget'] := Map(
             "hwnd", mouseHwnd,
             "title", WinGetTitle("ahk_id " mouseHwnd),
             "class", WinGetClass("ahk_id " mouseHwnd),
             "control", mouseControl
         )
+        finalContext.Displays["mouseMonitor"] := MonitorManager.GetFromPoint(mouseX, mouseY)
 
-        ; 焦点控件信息
-        local focusedControl := ControlGetFocus("A")
-        context['FocusedControl'] := Map(
-            "classNN", focusedControl,
-            "text", ControlGetText(focusedControl, "A")
-        )
-
-        ; 显示器信息
-        context['Displays'] := Map(
-            "count", MonitorManager.GetAll().Length,
-            "all", MonitorManager.GetAll(),
-            "primary", , MonitorManager.GetPrimary()
-            "windowMonitor", MonitorManager.GetFromWindow(hwnd),
-            "mouseMonitor", MonitorManager.GetFromPoint(mouseX, mouseY)
-        )
-
-        ; 虚拟桌面信息
-        if (this.VDA) {
-            local currentDesktop := DllCall(this.VDA . "\GetCurrentDesktopNumber", "Int")
-            local isWindowOnCurrent := DllCall(this.VDA . "\IsWindowOnCurrentVirtualDesktop", "Ptr", hwnd, "Int")
-            context['VirtualDesktop'] := Map(
-                "current", currentDesktop,
-                "isWinOnCurrent", isWindowOnCurrent
-            )
-        } else {
-            context['VirtualDesktop'] := Map("current", 1, "isWinOnCurrent", true)
-        }
-
-        ; 文本信息
-        context["TextSources"] := TextEngineManager.GetTextSources()
-
-        ; 插件注册的上下文信息
-        local processName := context.ActiveWindow.processName
-        if (this.Providers.Has(processName)) {
-            try {
-                local specificContext := this.Providers[processName](context)
-                for key, value in specificContext {
-                    context[key] := value
-                }
-            } catch {
-                ; 错误处理
-            }
-        }
-
-        return context
+        return finalContext
     }
 }
