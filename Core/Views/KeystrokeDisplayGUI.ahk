@@ -48,28 +48,27 @@ class KeystrokeDisplayGUI {
      */
     static BuildSimpleView(text) {
         local theme := this.DisplayGui.Theme
-        this.DisplayGui.SetFont("s16 Bold", theme.fontFamily)
-        this.DisplayGui.Add("Text", "vSimpleText c" . theme.error . " Center", " " . text . " ") ; 使用主题错误色
+        this.DisplayGui.SetFont("s16 Bold", theme.fonts.family)
+        this.DisplayGui.Add("Text", "vSimpleText c" . theme.colors.error . " Center", " " . text . " ")
     }
 
     /**
      * 内部方法：构建列表视图，用于 which-key 风格的引导
      */
     static BuildListView(currentSeq, mappings) {
-        local theme := this.DisplayGui.Theme
-        this.DisplayGui.SetFont("s10", theme.fontFamily)
+                local theme := this.DisplayGui.Theme
+        this.DisplayGui.SetFont("s10", theme.fonts.family)
 
-        ; 添加标题行
-        this.DisplayGui.Add("Text", "vCurrentSequence c" . theme.accent, " " . currentSeq)
-        this.DisplayGui.Add("Progress", "w400 h1 c" . theme.border . " -Theme", 100)
-
+        this.DisplayGui.Add("Text", "vCurrentSequence c" . theme.colors.accent, " " . currentSeq)
+        this.DisplayGui.Add("Progress", "w400 h1 c" . theme.colors.border . " -Theme", 100)
+    
         local yPos := 40
         for i, mapping in mappings {
             if (i > this.MaxItems) {
                 break
             }
-            this.DisplayGui.Add("Text", "x10 y" . yPos . " c" . theme.success, mapping.key)
-            this.DisplayGui.Add("Text", "x50 y" . yPos . " c" . theme.text, mapping.hint)
+            this.DisplayGui.Add("Text", "x10 y" . yPos . " c" . theme.colors.success, mapping.key)
+            this.DisplayGui.Add("Text", "x50 y" . yPos . " c" . theme.colors.text, mapping.hint)
             yPos += 20
         }
     }

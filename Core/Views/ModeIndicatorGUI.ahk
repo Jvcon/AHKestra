@@ -12,8 +12,8 @@ class ModeIndicatorGUI {
     static Init() {
         this.IndicatorGui := GuiService.CreateThemedWindow("+AlwaysOnTop -Caption +ToolWindow", "ModeIndicator")
         GuiService.RegisterGui("ModeIndicator", this.IndicatorGui)
-        this.IndicatorGui.BackColor := this.IndicatorGui.Theme.bg
-        this.IndicatorGui.SetFont("s12 Bold", this.IndicatorGui.Theme.fontFamily)
+        this.IndicatorGui.BackColor := this.IndicatorGui.Theme.colors.bg
+        this.IndicatorGui.SetFont("s12 Bold", this.IndicatorGui.Theme.fonts.family)
         this.IndicatorGui.Add("Text", "vModeText cFFFFFF Center", "")
     }
 

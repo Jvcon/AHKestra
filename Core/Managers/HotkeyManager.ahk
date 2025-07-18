@@ -12,14 +12,15 @@ class HotkeyManager {
     static ActiveLayers := Map()
     static CurrentMode := "NORMAL"
     static Modes := Map()
-    
-    static Init(){
+    static leaderKey := ""
+
+    static Init() {
         local defaults := Map("leaderKey", "Space", "timeout", 1000)
         ConfigService.RegisterDefaults("HotkeyManager", "settings", defaults)
     }
 
     static Activate() {
-        local leaderKey := ConfigService.Get("HotkeyManager.settings.leaderKey")
+        leaderKey := ConfigService.Get("HotkeyManager.settings.leaderKey")
         ModeIndicatorGUI.Init()
         KeystrokeDisplayGUI.Init()
         this.SequenceHook := InputHook("V T5", "{All}")
@@ -28,9 +29,9 @@ class HotkeyManager {
         this.SequenceHook.KeyOpt("{All}", "N")
 
         try {
-            Hotkey leaderKey, (*) => this.StartSequence()
+            Hotkey this.leaderKey, (*) => this.StartSequence()
         } catch Error as e {
-            MsgBox "无法注册 Leader 键: " leaderKey ".`n请检查按键名称是否有效。`n" e.Message
+            MsgBox "无法注册 Leader 键: " this.leaderKey ".`n请检查按键名称是否有效。`n" e.Message
         }
     }
 
@@ -113,7 +114,7 @@ class HotkeyManager {
         local context := ContextService.GetContext()
         if this.LayeredHotkeys.Has(activator) && this.LayeredHotkeys[activator].Has(actionKey) {
             for def in this.LayeredHotkeys[activator][actionKey] {
-                if ConditionService.Check(def.condition, context){
+                if ConditionService.Check(def.condition, context) {
                     this.HandleCallback(def)
                     return ; 执行第一个满足条件的
                 }
@@ -260,4 +261,63 @@ class HotkeyManager {
             MsgBox "执行回调时出错: " e.Message "`n所在文件: " e.File "`n所在行: " e.Line
         }
     }
+
+    /**
+     * 获取所有已注册的【常规】热键。
+     * @returns {Array}
+     */
+    static GetRegularHotkeys() {
+        local results := []
+        for _, defs in this.Hotkeys {
+            for def in defs {
+                results.Push(def.Clone()) ; 返回克隆，防止外部修改原始定义
+            }
+        }
+        return results
+    }
+
+    /**
+     * 获取所有已注册的【分层】热键。
+     * @returns {Array}
+     */
+    static GetLayeredHotkeys() {
+        local results := []
+        for _, activatorMap in this.LayeredHotkeys {
+            for _, defs in activatorMap {
+                for def in defs {
+                    results.Push(def.Clone())
+                }
+            }
+        }
+        return results
+    }
+
+    /**
+     * 获取所有已注册的【序列】热键。
+     * @returns {Array}
+     */
+    static GetSequenceHotkeys() {
+        local results := []
+
+        ; 内部递归函数，用于遍历热键树
+        _traverseTree(node, sequence := []) {
+            if (node.Has("_def")) {
+                for def in node["_def"] {
+                    ; 创建一个副本并移除 leaderKey，因为它对于用户来说是隐式的
+                    local displayDef := def.Clone()
+                    displayDef.keys.RemoveAt(1)
+                    results.Push(displayDef)
+                }
+            }
+            for key, subNode in node {
+                if (key != "_def") {
+                    _traverseTree(subNode, sequence . key)
+                }
+            }
+        }
+
+        _traverseTree(this.HotkeyTree)
+        return results
+    }
+
 }

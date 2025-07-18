@@ -1,46 +1,72 @@
 ; Core/Services/GuiService.ahk - 用户界面管理服务
+#Requires AutoHotkey v2.0
 
 class GuiService {
     static Themes := Map()
-    ; **名称变更**：从 ActiveWindows 改为 _managedGuis，以更准确地反映其职责
     static _managedGuis := Map()
+    static _defaultThemeName := "NordDark" ; 定义一个硬编码的最终备用主题
+    static _themesDir := A_ScriptDir . "\..\..\Themes" ; 相对于Core/Services/的路径
 
     static Init() {
-        local NordDark := Map(
-            "bg", "2E3440",         ; 背景色
-            "text", "E5E9F0",       ; 主要文本颜色
-            "accent", "88C0D0",     ; 强调色/标题色
-            "border", "4C566A",     ; 边框/分隔线颜色
-            "success", "A3BE8C",    ; 成功/绿色调
-            "warning", "EBCB8B",    ; 警告/黄色调
-            "error", "BF616A",      ; 错误/红色调
-            "fontFamily", "Segoe UI",
-            "fontSize", 10,
-            "fontTitleSize", 14
-        )
-        this.Themes["NordDark"] := NordDark
+        ; 1. 向 ConfigService 注册关于主题的默认设置
+        local defaults := Map("activeTheme", this._defaultThemeName)
+        ConfigService.RegisterDefaults("GuiService", "settings", defaults)
+
+        ; 2. 加载所有可用的主题文件
+        this.LoadAllThemes()
     }
 
-    static CreateThemedWindow(options := "", title, themeName := "NordDark") {
-        if (!this.Themes.Has(themeName)) {
-            throw Error("Theme not found: " . themeName)
+    /**
+     * 加载所有位于 Themes 目录下的 .json 主题文件。
+     */
+    static LoadAllThemes() {
+        if (!DirExist(this._themesDir)) {
+            return ; 如果主题目录不存在，则跳过
         }
-        local theme := this.Themes[themeName]
 
+        Loop Files, this._themesDir . "\*.json" {
+            try {
+                local themeContent := FileRead(A_LoopFileFullPath)
+                local themeData := jsongo.Parse(themeContent)
+                local themeName := StrReplace(A_LoopFileName, ".json", "")
+                this.Themes[themeName] := themeData
+            } catch Error as e {
+                MsgBox "主题文件解析失败: " . A_LoopFileName . "`n错误: " . e.Message . "`n该主题将被忽略。"
+            }
+        }
+    }
+
+    static CreateThemedWindow(options := "", title) {
+        ; 1. 从配置服务获取当前激活的主题名称
+        local activeThemeName := ConfigService.Get("GuiService.settings.activeTheme")
+
+        ; 2. 获取主题对象，并实现备用逻辑
+        local theme := ""
+        if (this.Themes.Has(activeThemeName)) {
+            theme := this.Themes[activeThemeName]
+        } else if (this.Themes.Count > 0) {
+            for name, themeObj in this.Themes {
+                theme := themeObj
+                activeThemeName := name
+                break
+            }
+            MsgBox "警告：配置的主题 '" . ConfigService.Get("GuiService.settings.activeTheme") . "' 未找到。`n已自动回退到主题: '" . activeThemeName . "'",, "48"
+        } else {
+            throw Error("无法创建窗口，因为没有任何主题被成功加载。请检查 'Themes' 目录。")
+        }
+
+        ; 3. 创建并设置GUI样式
         local gui := Gui("-DPIScale " . options, title)
         gui.Opt("-Theme")
 
-        gui.BackColor := theme.bg
-        gui.SetFont("s" . theme.fontSize, theme.fontFamily)
-        gui.Theme := theme
+        gui.BackColor := theme.colors.bg
+        gui.SetFont("s" . theme.fonts.size, theme.fonts.family)
+        
+        gui.Theme := theme 
 
         return gui
     }
 
-    /**
-     * @param name {String} GUI的唯一名称，如 "ModeIndicator", "KeystrokeDisplay"
-     * @param guiObj {Gui} 要注册的Gui对象
-     */
     static RegisterGui(name, guiObj) {
         if (this._managedGuis.Has(name)) {
             try {
@@ -51,7 +77,6 @@ class GuiService {
     }
 
     static ShowSingletonWindow(name, creationFunc) {
-        ; 检查时使用 _managedGuis
         if (this._managedGuis.Has(name) && WinExist("ahk_id " . this._managedGuis[name].Hwnd)) {
             WinActivate("ahk_id " . this._managedGuis[name].Hwnd)
         } else {
@@ -61,9 +86,6 @@ class GuiService {
         }
     }
 
-    /**
-     * 在应用退出时，销毁所有已注册的窗口。
-     */
     static Cleanup() {
         for name, gui in this._managedGuis {
             if (IsObject(gui) && gui.Hwnd) {

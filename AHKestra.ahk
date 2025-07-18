@@ -7,7 +7,45 @@ global APP_NAME := "AHKestra"
 global APP_VERSION := "1.0.0"
 global APP_CONFIG_DIR := A_AppData . "\" . APP_NAME
 global APP_PLUGINS_DIR := A_ScriptDir . "\Plugins"
+global APP_THEMES_DIR := A_ScriptDir . "\Themes"
 global APP_LIB_DIR := A_ScriptDir . "\Lib"
+
+if (!DirExist(APP_THEMES_DIR))
+    DirCreate(APP_THEMES_DIR)
+
+; 检查默认主题文件是否存在，不存在则创建，确保程序可以正常启动
+defaultThemePath := APP_THEMES_DIR . "\NordDark.json"
+if (!FileExist(defaultThemePath)) {
+    ; 1. 将默认主题定义为原生的 AHK Map 对象，更易于维护
+    defaultThemeMap := Map(
+        "name", "Nord Dark",
+        "author", "Arctic Ice Studio",
+        "colors", Map(
+            "bg", "2E3440",
+            "text", "E5E9F0",
+            "accent", "88C0D0",
+            "border", "4C566A",
+            "success", "A3BE8C",
+            "warning", "EBCB8B",
+            "error", "BF616A"
+        ),
+        "fonts", Map(
+            "family", "Segoe UI",
+            "size", 10,
+            "titleSize", 14
+        )
+    )
+
+    try {
+        ; 2. 使用 jsongo.Stringify 并传入 spacer 参数 (这里用 4 个空格) 来生成格式化的JSON字符串
+        formattedJson := jsongo.Stringify(defaultThemeMap, , 4)
+
+        ; 3. 将格式化后的字符串写入文件
+        FileOpen(defaultThemePath, "w", "UTF-8").Write(formattedJson)
+    } catch {
+        MsgBox "无法创建默认主题文件，程序可能无法正常显示UI。", , "16"
+    }
+}
 
 ; 引入核心库
 #Include <JSON>
@@ -28,6 +66,8 @@ global APP_LIB_DIR := A_ScriptDir . "\Lib"
 #Include %A_ScriptDir%\Core\Managers\TextEngineManager.ahk
 
 #Include %A_ScriptDir%\Core\TrayMenu.ahk
+#Include %A_ScriptDir%\Core\Views\SettingsGui.ahk
+#Include %A_ScriptDir%\Core\Views\PluginConfigGuiFactory.ahk
 
 ; 初始化应用
 InitApp()

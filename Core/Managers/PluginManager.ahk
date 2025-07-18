@@ -35,6 +35,13 @@ class PluginManager {
         }
 
         pluginInstance := Plugin(pluginContext)
+        
+        if (manifest.HasProp("configuration") && manifest.configuration.Count > 0) {
+            pluginInstance.DefineMethod("ShowConfiguration",
+                (this, ownerHwnd := 0) => PluginConfigGuiFactory.CreateAndShow(this.context.name, ownerHwnd)
+            )
+        }
+
         this.LoadedPlugins[manifest.name] := pluginInstance
 
         ; 3. 处理声明式贡献
@@ -110,6 +117,16 @@ class PluginManager {
                 }
             }
         }
+        if (manifest.HasProp("configuration")) {
+            local configurationSchema := manifest.configuration
+            local defaults := Map()
+            for key, spec in configurationSchema {
+                if (spec.HasProp("default")) {
+                    defaults[key] := spec.default
+                }
+            }
+            ConfigService.RegisterDefaults(manifest.name, "settings", defaults, configurationSchema)
+        }
     }
 
     static ValidateManifest(manifest) {
@@ -120,5 +137,9 @@ class PluginManager {
             }
         }
         return true
+    }
+
+    static GetLoadedPlugins() {
+        return this.LoadedPlugins
     }
 }
