@@ -57,13 +57,13 @@
 
 AHKestra 的强大之处在于其独特的设计哲学，它将几个核心概念无缝地融合在一起：
 
-1. **全场景上下文 (`ContextInfo`)**：我们构建了一个强大的上下文信息中心，它不仅能感知窗口、进程，还能主动获取选中的文本、剪贴板内容等多种文本源，为所有模块提供“全知”的上下文对象。这是实现一切智能化的基础。
+1. **全场景上下文 (`ContextService`)**：我们构建了一个强大的上下文信息中心，它不仅能感知窗口、进程，还能主动获取选中的文本、剪贴板内容等多种文本源，为所有模块提供“全知”的上下文对象。这是实现一切智能化的基础。
 
 2. **插件化的上下文扩展 (Pluggable Context Providers)**：我们深知，通用的上下文信息无法满足所有高级需求。因此，AHKestra 设计了一个**可插拔的上下文提供者 (Context Provider) 框架**。任何插件都可以为特定的应用程序（如 Total Commander、Photoshop）注册自己的深度上下文提供者。当该应用激活时，框架会自动调用此提供者，将如“活动面板路径”、“当前图层名称”等深度信息，动态地注入到全局上下文对象中。这使得 AHKestra 的感知能力可以被社区无限扩展。
 
 3. **通用条件库 (`Conditions`)**：为了减少插件开发者的重复工作，我们提供了一个包含大量常用判断逻辑的通用条件库。插件可以直接在 `manifest.json` 中声明使用这些条件（如 `isBrowser`、`hasSelection`）。
 
-4. **智能分发器 (`ConditionHelper`)**：这是框架的决策中枢。它会自动评估一个功能（快捷键或菜单项）的条件。这个过程非常智能：它会**优先在通用条件库中查找**，如果找不到，则**回退到插件自定义的条件函数**。这种机制在为您提供便利的同时，也保证了最大的灵活性。
+4. **智能分发器 (`ConditionService`)**：这是框架的决策中枢。它会自动评估一个功能（快捷键或菜单项）的条件。这个过程非常智能：它会**优先在通用条件库中查找**，如果找不到，则**回退到插件自定义的条件函数**。这种机制在为您提供便利的同时，也保证了最大的灵活性。
 
 5. **统一的声明式接口 (`manifest.json`)**：所有功能的贡献都通过统一的 `manifest.json` 进行。无论是快捷键、右键菜单，还是文本扩展，插件都以一种清晰、解耦的方式声明其“意图”，由框架负责实现。这种设计理念与许多现代应用（如 **Stream Deck**）通过插件系统进行功能扩展的方式不谋而合 [My Stream Deck Setup](https://switowski.com/blog/my-stream-deck-setup/){target="_blank" class="gpt-web-url"}。
 
@@ -158,8 +158,8 @@ class Plugin {
      */
     Init() {
         // 向核心框架注册一个针对 TOTALCMD.EXE 的上下文提供者
-        ContextInfo.RegisterProvider("TOTALCMD.EXE", this.getTCSpecificContext.Bind(this))
-        ContextInfo.RegisterProvider("TOTALCMD64.EXE", this.getTCSpecificContext.Bind(this))
+        ContextService.RegisterProvider("TOTALCMD.EXE", this.getTCSpecificContext.Bind(this))
+        ContextService.RegisterProvider("TOTALCMD64.EXE", this.getTCSpecificContext.Bind(this))
     }
 
     /**

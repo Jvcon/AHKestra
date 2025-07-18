@@ -1,4 +1,5 @@
 class PluginManager {
+    static LoadedPlugins := []
     static LoadPlugins() {
         Loop Files, APP_PLUGINS_DIR . "\*", "D" {
             try {
@@ -31,14 +32,10 @@ class PluginManager {
             name: manifest.name,
             version: manifest.version,
             dir: pluginDir,
-            config: Config.GetPluginConfig(manifest.name),
-            ; 预留给插件的程序化API
-            RegisterClipboardProcessor: (name, cb) => ClipboardManager.RegisterProcessor(manifest.name, name, cb),
-            RegisterTextProcessor: (name, cb) => TextProcessingManager.RegisterProcessor(manifest.name, name, cb)
         }
 
         pluginInstance := Plugin(pluginContext)
-        LoadedPlugins[manifest.name] := pluginInstance
+        this.LoadedPlugins[manifest.name] := pluginInstance
 
         ; 3. 处理声明式贡献
         this.ProcessContributions(pluginInstance, manifest)
@@ -48,7 +45,7 @@ class PluginManager {
             pluginInstance.Init()
         }
 
-        EventSystem.Trigger("Plugin.Loaded", manifest.name)
+        EventService.Trigger("Plugin.Loaded", manifest.name)
     }
 
     static ProcessContributions(pluginInstance, manifest) {
@@ -56,6 +53,7 @@ class PluginManager {
             return
 
         local contributions := manifest.contributes
+        local leaderKey := ConfigService.Get("HotkeyManager.settings.leaderKey")
 
         ; 处理快捷键
         if (contributions.HasProp("hotkeys")) {
@@ -65,8 +63,8 @@ class PluginManager {
                 }
                 local finalKeys := hotkeyDef.keys
                 if (hotkeyDef.type == "sequence") {
-                    ; 创建一个新的数组，将全局 LeaderKey 作为第一个元素
-                    finalKeys.InsertAt(1, HotkeyManager.LeaderKey)
+                    ; 创建一个新的数组，将全局 leaderKey 作为第一个元素
+                    finalKeys.InsertAt(1, leaderKey)
                 }
                 ; 动态创建回调，使其调用插件实例的对应方法
                 local funcName := hotkeyDef.function

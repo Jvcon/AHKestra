@@ -1,10 +1,11 @@
+; Core/Services/ContextService.ahk - 上下文感知服务
 #Requires AutoHotkey v2.0
 
 ; 推荐：为了支持虚拟桌面功能, 请从以下地址下载 VirtualDesktopAccessor.dll
 ; 并将其放置在 Lib 目录下。
 ; https://github.com/Ciantic/VirtualDesktopAccessor
 
-class ContextInfo {
+class ContextService {
     static VDA := ""
     static Providers := Map()
 
@@ -35,9 +36,9 @@ class ContextInfo {
             "processName", WinGetProcessName("ahk_id " hwnd)
         )
 
-        ; 鼠标信息
-        local mouseHwnd, mouseControl
-        MouseGetPos(,, &mouseHwnd, &mouseControl)        
+        ; 鼠标对象信息
+        local mouseX, mouseY, mouseHwnd, mouseControl
+        MouseGetPos(&mouseX, &mouseY, &mouseHwnd, &mouseControl)
         context['MouseTarget'] := Map(
             "hwnd", mouseHwnd,
             "title", WinGetTitle("ahk_id " mouseHwnd),
@@ -53,12 +54,13 @@ class ContextInfo {
         )
 
         ; 显示器信息
-        local monitors := []
-        Loop SysGet("MonitorCount") {
-            local info := SysGet("Monitor", A_Index)
-            monitors.Push(Map("Left", info.Left, "Right", info.Right, "Top", info.Top, "Bottom", info.Bottom))
-        }
-        context['Displays'] := monitors
+        context['Displays'] := Map(
+            "count", MonitorManager.GetAll().Length,
+            "all", MonitorManager.GetAll(),
+            "primary", , MonitorManager.GetPrimary()
+            "windowMonitor", MonitorManager.GetFromWindow(hwnd),
+            "mouseMonitor", MonitorManager.GetFromPoint(mouseX, mouseY)
+        )
 
         ; 虚拟桌面信息
         if (this.VDA) {
@@ -87,7 +89,7 @@ class ContextInfo {
                 ; 错误处理
             }
         }
-        
+
         return context
     }
 }

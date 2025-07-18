@@ -4,9 +4,15 @@
 class ContextMenuManager {
     static AllMenuItems := [] ; 存储所有已注册的菜单项定义
 
-    static Init() {
-        ; 注册热键用于触发菜单，例如 Win + 右键
-        Hotkey("#RButton", (*) => this.BuildAndShowMenu())
+    static Init(){
+        local defaults := Map("menuKey", "#RButton")
+        ConfigService.RegisterDefaults("ContextMenuManager", "settings", defaults)
+    }
+
+    static Activate() {
+        local menuKey := ConfigService.Get("ContextMenuManager.settings.menuKey")
+        ; 注册热键用于触发菜单
+        Hotkey(menuKey, (*) => this.BuildAndShowMenu())
     }
 
     /**
@@ -29,14 +35,14 @@ class ContextMenuManager {
      * 构建并显示上下文菜单。
      */
     static BuildAndShowMenu() {
-        local context := ContextInfo.GetContext()
+        local context := ContextService.GetContext()
         local dynamicMenu := Menu()
         local hasVisibleItems := false
 
         for itemDef in this.AllMenuItems {
             ; 检查条件是否满足
             local showItem := true
-            if ConditionHelper.Evaluate(itemDef.condition) {
+            if ConditionService.Check(itemDef.condition,context) {
                 try {
                     showItem := itemDef.condition(context)
                 } catch {

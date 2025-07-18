@@ -1,14 +1,17 @@
-; Core/KeystrokeDisplayGUI.ahk
+; Core/Views/KeystrokeDisplayGUI.ahk
+
 #Requires AutoHotkey v2.0
 
 class KeystrokeDisplayGUI {
     static DisplayGui := ""
-    static DefaultPosition := {x: A_ScreenWidth/2 - 200, y: A_ScreenHeight - 300}
+    static DefaultPosition := { x: A_ScreenWidth / 2 - 200, y: A_ScreenHeight - 300 }
     static MaxItems := 10
 
     static Init() {
-        this.DisplayGui := Gui("+AlwaysOnTop -Caption +ToolWindow", "KeystrokeDisplay")
-        this.DisplayGui.BackColor := "3B4252"
+        this.DisplayGui := GuiService.CreateThemedWindow("+AlwaysOnTop -Caption +ToolWindow", "KeystrokeDisplay")
+        GuiService.RegisterGui("KeystrokeDisplay", this.DisplayGui)
+
+        this.DisplayGui.BackColor := this.DisplayGui.Theme.bg
     }
 
     /**
@@ -22,7 +25,7 @@ class KeystrokeDisplayGUI {
 
         ; 清理上一次的动态控件
         this.ClearDynamicControls()
-        
+
         if (param1 == "") {
             this.DisplayGui.Hide()
             return
@@ -35,7 +38,7 @@ class KeystrokeDisplayGUI {
             ; --- 模式1: 简单模式 (单个热键) ---
             this.BuildSimpleView(param1)
         }
-        
+
         this.DisplayGui.Show("AutoSize NA")
         this.DisplayGui.Show("X" . this.DefaultPosition.x . " Y" . this.DefaultPosition.y . " NA")
     }
@@ -44,27 +47,29 @@ class KeystrokeDisplayGUI {
      * 内部方法：构建简单视图，用于显示 "Ctrl+X" 等
      */
     static BuildSimpleView(text) {
-        this.DisplayGui.SetFont("s16 Bold", "Segoe UI")
-        this.DisplayGui.Add("Text", "vSimpleText cE5E9F0 Center", " " . text . " ")
+        local theme := this.DisplayGui.Theme
+        this.DisplayGui.SetFont("s16 Bold", theme.fontFamily)
+        this.DisplayGui.Add("Text", "vSimpleText c" . theme.error . " Center", " " . text . " ") ; 使用主题错误色
     }
 
     /**
      * 内部方法：构建列表视图，用于 which-key 风格的引导
      */
     static BuildListView(currentSeq, mappings) {
-        this.DisplayGui.SetFont("s10", "Consolas")
-        
+        local theme := this.DisplayGui.Theme
+        this.DisplayGui.SetFont("s10", theme.fontFamily)
+
         ; 添加标题行
-        this.DisplayGui.Add("Text", "vCurrentSequence c88C0D0 w400", " " . currentSeq)
-        this.DisplayGui.Add("Progress", "w400 h1 c4C566A -Theme", 100)
-        
+        this.DisplayGui.Add("Text", "vCurrentSequence c" . theme.accent, " " . currentSeq)
+        this.DisplayGui.Add("Progress", "w400 h1 c" . theme.border . " -Theme", 100)
+
         local yPos := 40
         for i, mapping in mappings {
             if (i > this.MaxItems) {
                 break
             }
-            this.DisplayGui.Add("Text", "x10 y" . yPos . " cBF616A", mapping.key)
-            this.DisplayGui.Add("Text", "x50 y" . yPos . " cE5E9F0", mapping.hint)
+            this.DisplayGui.Add("Text", "x10 y" . yPos . " c" . theme.success, mapping.key)
+            this.DisplayGui.Add("Text", "x50 y" . yPos . " c" . theme.text, mapping.hint)
             yPos += 20
         }
     }
@@ -77,7 +82,7 @@ class KeystrokeDisplayGUI {
             ctrl.Destroy()
         }
     }
-    
+
     static Hide() {
         if IsObject(this.DisplayGui)
             this.DisplayGui.Hide()

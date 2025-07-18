@@ -1,6 +1,6 @@
 #Requires AutoHotkey v2.0
-#Include %A_ScriptDir%\Core\ModeIndicatorGUI.ahk
-#Include %A_ScriptDir%\Core\KeystrokeDisplayGUI.ahk
+#Include %A_ScriptDir%\Core\Views\ModeIndicatorGUI.ahk
+#Include %A_ScriptDir%\Core\Views\KeystrokeDisplayGUI.ahk
 
 class HotkeyManager {
     static Hotkeys := Map()
@@ -12,10 +12,14 @@ class HotkeyManager {
     static ActiveLayers := Map()
     static CurrentMode := "NORMAL"
     static Modes := Map()
-    static LeaderKey := "Space"
+    
+    static Init(){
+        local defaults := Map("leaderKey", "Space", "timeout", 1000)
+        ConfigService.RegisterDefaults("HotkeyManager", "settings", defaults)
+    }
 
-    static Init() {
-        ContextInfo.Init()
+    static Activate() {
+        local leaderKey := ConfigService.Get("HotkeyManager.settings.leaderKey")
         ModeIndicatorGUI.Init()
         KeystrokeDisplayGUI.Init()
         this.SequenceHook := InputHook("V T5", "{All}")
@@ -24,9 +28,9 @@ class HotkeyManager {
         this.SequenceHook.KeyOpt("{All}", "N")
 
         try {
-            Hotkey this.LeaderKey, (*) => this.StartSequence()
-        } catch Error {
-            MsgBox "无法注册 Leader 键: " this.LeaderKey ".`n请检查按键名称是否有效。`n" Error.Message
+            Hotkey leaderKey, (*) => this.StartSequence()
+        } catch Error as e {
+            MsgBox "无法注册 Leader 键: " leaderKey ".`n请检查按键名称是否有效。`n" e.Message
         }
     }
 
@@ -65,8 +69,8 @@ class HotkeyManager {
                     }
                     this.LayeredHotkeys[activator][actionKey].Push(hotkeyDef)
                 case "sequence":
-                    if (hotkeyDef.keys[1] != this.LeaderKey) {
-                        MsgBox "序列热键注册失败: " . hotkeyDef.keys.Join("") . "`n原因：序列必须以配置的 Leader 键 (" . this.LeaderKey . ") 开头。"
+                    if (hotkeyDef.keys[1] != this.leaderKey) {
+                        MsgBox "序列热键注册失败: " . hotkeyDef.keys.Join("") . "`n原因：序列必须以配置的 Leader 键 (" . this.leaderKey . ") 开头。"
                         return
                     }
                     this.BuildHotkeyTree(hotkeyDef)
@@ -93,10 +97,10 @@ class HotkeyManager {
     }
 
     static HandleHotkeyDispatch(keyStr) {
-        local context := ContextInfo.GetContext()
+        local context := ContextService.GetContext()
         if this.Hotkeys.Has(keyStr) {
             for def in this.Hotkeys[keyStr] {
-                if ConditionHelper.Evaluate(def, context) {
+                if ConditionService.Check(def.condition, context) {
                     this.HandleCallback(def)
                     return ; 执行第一个满足条件的，然后停止
                 }
@@ -106,10 +110,10 @@ class HotkeyManager {
 
     static HandleLayeredDispatch(keyPath) {
         local parts := StrSplit(keyPath, ">"), activator := parts[1], actionKey := parts[2]
-        local context := ContextInfo.GetContext()
+        local context := ContextService.GetContext()
         if this.LayeredHotkeys.Has(activator) && this.LayeredHotkeys[activator].Has(actionKey) {
             for def in this.LayeredHotkeys[activator][actionKey] {
-                if ConditionHelper.Evaluate(def, context) {
+                if ConditionService.Check(def.condition, context){
                     this.HandleCallback(def)
                     return ; 执行第一个满足条件的
                 }
@@ -141,7 +145,7 @@ class HotkeyManager {
     }
 
     static StartSequence() {
-        this.SequenceBuffer := this.LeaderKey
+        this.SequenceBuffer := this.leaderKey
         this.SequenceHook.Start()
         this.SequenceTimer := SetTimer(this.SequenceTimeout.Bind(this), -5000)
         this.UpdateSequenceDisplay()
@@ -153,7 +157,7 @@ class HotkeyManager {
     }
 
     static UpdateSequenceDisplay() {
-        local context := ContextInfo.GetContext()
+        local context := ContextService.GetContext()
         local currentNode := this.HotkeyTree
         local keys := StrSplit(this.SequenceBuffer)
         try {
@@ -167,7 +171,7 @@ class HotkeyManager {
 
         if (currentNode.Has("_def")) {
             for def in currentNode["_def"] {
-                if ConditionHelper.Evaluate(def, context) { ; 找到第一个满足条件的并执行
+                if ConditionService.Check(def, context) { ; 找到第一个满足条件的并执行
                     this.SequenceHook.Stop()
                     this.HandleCallback(def)
                     return
@@ -182,7 +186,7 @@ class HotkeyManager {
                 if (node.Has("_def")) {
                     ; 寻找一个在当前上下文可用的提示
                     for def in node["_def"] {
-                        if ConditionHelper.Evaluate(def, context) {
+                        if ConditionService.Check(def, context) {
                             hint := def.hint
                             isActionable := true
                             break
@@ -250,7 +254,7 @@ class HotkeyManager {
                 KeystrokeDisplayGUI.Show(text)
                 SetTimer () => KeystrokeDisplayGUI.Hide(""), -1000
             }
-            local context := ContextInfo.GetContext()
+            local context := ContextService.GetContext()
             hotkeyInfo.callback(context)
         } catch Error as e {
             MsgBox "执行回调时出错: " e.Message "`n所在文件: " e.File "`n所在行: " e.Line

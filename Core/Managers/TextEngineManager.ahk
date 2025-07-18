@@ -51,7 +51,7 @@ class TextEngineManager {
      * @param trigger {String} 被触发的热字符串 (e.g., ":date")
      */
     static _expansionCallback(trigger) {
-        local context := ContextInfo.GetContext()
+        local context := ContextService.GetContext()
 
         if this.Expansions.Has(trigger) {
             for expansion in this.Expansions[trigger] {

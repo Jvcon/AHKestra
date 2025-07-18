@@ -1,5 +1,5 @@
-; EventSystem.ahk - 事件系统
-class EventSystem {
+; Core/Services/EventService.ahk - 事件消息服务
+class EventService {
     static Listeners := Map()
     
     static On(event, callback) {
