@@ -52,7 +52,7 @@ class ConditionService {
         try {
             local result := this._conditionRegistry[key](context)
             return isNegated ? !result : !!result ; 确保返回的是纯布尔值
-        } catch e {
+        } catch Error as e {
             Error "Condition '" . key . "' failed with an error: " . e.Message
             return false ; 任何条件函数执行出错，都安全地返回 false
         }

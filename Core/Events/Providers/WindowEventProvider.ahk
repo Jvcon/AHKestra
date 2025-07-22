@@ -4,7 +4,7 @@
  * @ProviderDescription 提供了与操作系统窗口相关的核心事件，如窗口的激活、移动和大小调整。
  * @Version 1.1.0
  */
-class WindowEventsProvider extends IEventProvider {
+class WindowEventProvider extends IEventProvider {
     
     RegisterEvents(producerName) {
         local definitions := this.GetEventDefinitions()
@@ -20,8 +20,8 @@ class WindowEventsProvider extends IEventProvider {
         try {
             local eventType := StrSplit(eventName, ".")[2]
             return WinEvent[eventType](handler, target)
-        } catch e {
-            throw Error("WindowEventsProvider failed to create hook for " . eventName, -1, e)
+        } catch Error as e {
+            throw Error("WindowEventProvider failed to create hook for " . eventName, -1, e)
         }
     }
     
@@ -63,4 +63,4 @@ class WindowEventsProvider extends IEventProvider {
     }
 }
 
-global _g_CurrentProviderClass := WindowEventsProvider
+global _g_CurrentProviderClass := WindowEventProvider

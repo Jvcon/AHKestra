@@ -53,7 +53,6 @@ if (!FileExist(defaultThemePath)) {
 ; 引入核心库
 #Include <JSON>
 #Include <YAML>
-#Include <Monitors>
 
 #Include %A_ScriptDir%\Core\Events\Events.ahk
 #Include %A_ScriptDir%\Core\Services\ContextService.ahk

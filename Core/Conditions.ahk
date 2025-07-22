@@ -1,3 +1,5 @@
+; Core/Services/CommonConditions.ahk - 常用条件
+
 #Requires AutoHotkey v2.0
 
 ; 一个包含常用、通用条件判断方法的静态类。

@@ -1,7 +1,7 @@
-#Include %A_ScriptDir%\IEventProvider.ahk
-#Include %A_ScriptDir%\EventBus.ahk
-#Include %A_ScriptDir%\EventRegistry.ahk
-#Include %A_ScriptDir%\EventLoaderService.ahk
+#Include %A_ScriptDir%\..\Events\IEventProvider.ahk
+#Include %A_ScriptDir%\..\Events\EventBus.ahk
+#Include %A_ScriptDir%\..\Events\EventRegistry.ahk
+#Include %A_ScriptDir%\..\Events\EventLoaderService.ahk
 
 
 class Events {
