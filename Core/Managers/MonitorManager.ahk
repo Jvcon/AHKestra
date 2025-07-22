@@ -1,4 +1,5 @@
 #Requires AutoHotkey v2.0
+#Include %A_ScriptDir%\Lib\Monitors.ahk
 
 class MonitorManager {
     ; --- 缓存层：存储稳定的显示器配置信息 ---
@@ -8,7 +9,6 @@ class MonitorManager {
 
     ; --- 内部资源 ---
     static _MonitorsInstance := "" ; 持有第三方库的实例
-    static _hiddenGui := ""      ; 持有专用于消息监听的隐藏窗口句柄
 
     /**
      * 初始化管理器：创建资源并设置事件监听。
@@ -16,14 +16,7 @@ class MonitorManager {
      */
     static Init() {
         this._MonitorsInstance := Monitor()
-        
-        ; 创建一个专用的、不可见的GUI窗口用于消息监听
-        this._hiddenGui := Gui("+E0x08000000 -Caption", "MonitorListener")
-        
-        GuiService.RegisterGui("MonitorListener", this._hiddenGui)
-
-        ; 消息监听 WM_DISPLAYCHANGE 
-        OnMessage(0x007E, this.OnDisplayChange.Bind(this))
+        EventService.On("System:DisplayChanged", this.OnDisplayChange.Bind(this))
     }
     
     /**
@@ -55,7 +48,6 @@ class MonitorManager {
                 this._cachedPrimary := this._cachedAll[1]
             }
             this._isInitialized := true
-            EventService.Trigger("Display.ConfigChanged") ; 触发一个全局事件
         } catch Error {
             ; 在获取显示器信息失败时进行降级处理
             this._isInitialized := false

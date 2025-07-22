@@ -5,7 +5,6 @@
 ; 全局设置
 global APP_NAME := "AHKestra"
 global APP_VERSION := "1.0.0"
-global APP_CONFIG_DIR := A_AppData . "\" . APP_NAME
 global APP_PLUGINS_DIR := A_ScriptDir . "\Plugins"
 global APP_THEMES_DIR := A_ScriptDir . "\Themes"
 global APP_LIB_DIR := A_ScriptDir . "\Lib"
@@ -49,8 +48,6 @@ if (!FileExist(defaultThemePath)) {
 
 ; 引入核心库
 #Include <JSON>
-#Include <YAML>
-#Include <Monitors>
 
 #Include %A_ScriptDir%\Core\Services\EventService.ahk
 #Include %A_ScriptDir%\Core\Services\ContextService.ahk

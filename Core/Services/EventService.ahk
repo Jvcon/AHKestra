@@ -1,7 +1,9 @@
 ; Core/Services/EventService.ahk - 事件消息服务
+
+#Include %A_ScriptDir%\EventBridge\SystemEventBridge.ahk
 class EventService {
     static Listeners := Map()
-    
+
     static On(event, callback) {
         if !this.Listeners.Has(event) {
             this.Listeners[event] := []

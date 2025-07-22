@@ -38,7 +38,7 @@ class ContextService {
             "UInt", this.EVENT_SYSTEM_FOREGROUND,  ; eventMin
             "UInt", this.EVENT_SYSTEM_FOREGROUND,  ; eventMax
             "Ptr", 0,                             ; hmodWinEventProc
-            "Ptr", RegisterCallback(this._onForegroundChange.Bind(this), "F"), ; lpfnWinEventProc
+            "Ptr", CallbackCreate(this._onForegroundChange.Bind(this), "F"), ; lpfnWinEventProc
             "UInt", 0,                            ; idProcess
             "UInt", 0,                            ; idThread
             "UInt", 0)                            ; dwFlags (WINEVENT_OUTOFCONTEXT)
@@ -115,7 +115,8 @@ class ContextService {
         ; 活动层上下文
         if (this._cachedContext.active && now - this._cacheTimestamps.active < this._cacheDurations.active) {
             for k, v in this._cachedContext.active {
-                finalContext[k] := v}
+                finalContext[k] := v
+            }
         } else {
             local active := Map()
             active.ActiveWindow.title := WinGetTitle("ahk_id " . finalContext.ActiveWindow.hwnd)
@@ -123,7 +124,7 @@ class ContextService {
                 "classNN", ControlGetFocus("A"),
                 "text", ControlGetText(ControlGetFocus("A"), "A"))
 
-            active["TextSources"] := TextEngineManager.GetTextSources()
+            active["TextSources"] := this.GetTextSources()
 
             ; 插件提供的上下文属于活动层
             local processName := finalContext.ActiveWindow.processName
@@ -156,5 +157,32 @@ class ContextService {
         finalContext.Displays["mouseMonitor"] := MonitorManager.GetFromPoint(mouseX, mouseY)
 
         return finalContext
+    }
+
+    /**
+     * 获取所有可能的文本源
+     * @returns {Map} 一个包含所有文本源的 Map 对象。
+     */
+    static GetTextSources() {
+        local sources := Map()
+
+        local oldClipboard := ClipboardAll(), selectedText := ""
+        A_Clipboard := ""
+        SendInput "^c"
+        if ClipWait(0.2, true) {
+            selectedText := A_Clipboard
+        }
+        A_Clipboard := oldClipboard
+
+        if (selectedText != "") {
+            sources["selection"] := selectedText
+        }
+
+        ; b. 获取剪贴板内容
+        if (A_Clipboard != "") {
+            sources["clipboard"] := A_Clipboard
+        }
+
+        return sources
     }
 }
