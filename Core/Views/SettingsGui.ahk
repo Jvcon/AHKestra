@@ -110,7 +110,7 @@ class SettingsGui {
         ; 为双击事件添加回调，用于打开插件配置
         lvPlugins.OnEvent("DoubleClick", this._onPluginConfig.Bind(this))
 
-        local loadedPlugins := PluginManager.GetLoadedPlugins()
+        local loadedPlugins := PluginService.GetLoadedPlugins()
         for name, instance in loadedPlugins {
             local manifest := instance.context
             local hasConfig := manifest.HasProp("configuration") && manifest.configuration.Count > 0

@@ -12,7 +12,7 @@ class TextEngineManager {
     ; =============================================================
 
     /**
-     * 由 PluginManager 调用，从 YAML 文件中解析并注册文本扩展。
+     * 由 PluginService 调用，从 YAML 文件中解析并注册文本扩展。
      * @param yamlPath {String} YAML 文件的完整路径。
      */
     static RegisterExpansionFromYaml(yamlPath) {

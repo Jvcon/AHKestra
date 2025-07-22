@@ -5,18 +5,12 @@ class ContextMenuManager {
     static AllMenuItems := [] ; 存储所有已注册的菜单项定义
 
     static Init(){
-        local defaults := Map("menuKey", "#RButton")
-        ConfigService.RegisterDefaults("ContextMenuManager", "settings", defaults)
-    }
-
-    static Activate() {
         local menuKey := ConfigService.Get("ContextMenuManager.settings.menuKey")
-        ; 注册热键用于触发菜单
         Hotkey(menuKey, (*) => this.BuildAndShowMenu())
     }
 
     /**
-     * 由 PluginManager 调用，注册一个菜单项定义。
+     * 由 PluginService 调用，注册一个菜单项定义。
      * @param pluginName {String} 插件名称。
      * @param path {String} 菜单路径，用 "/" 分隔，如 "文件/操作/复制"。
      * @param condition {Func} 条件函数，接收上下文并返回布尔值。

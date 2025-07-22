@@ -15,11 +15,6 @@ class HotkeyManager {
     static leaderKey := ""
 
     static Init() {
-        local defaults := Map("leaderKey", "Space", "timeout", 1000)
-        ConfigService.RegisterDefaults("HotkeyManager", "settings", defaults)
-    }
-
-    static Activate() {
         leaderKey := ConfigService.Get("HotkeyManager.settings.leaderKey")
         ModeIndicatorGUI.Init()
         KeystrokeDisplayGUI.Init()

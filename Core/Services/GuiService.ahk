@@ -8,11 +8,6 @@ class GuiService {
     static _themesDir := A_ScriptDir . "\..\..\Themes" ; 相对于Core/Services/的路径
 
     static Init() {
-        ; 1. 向 ConfigService 注册关于主题的默认设置
-        local defaults := Map("activeTheme", this._defaultThemeName)
-        ConfigService.RegisterDefaults("GuiService", "settings", defaults)
-
-        ; 2. 加载所有可用的主题文件
         this.LoadAllThemes()
     }
 

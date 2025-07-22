@@ -13,6 +13,7 @@ class ConfigService {
     static _config := Map()        ; 运行时合并后的最终配置对象
     static _defaults := Map()      ; 所有模块注册的默认配置
     static _schema := Map()        ; 所有模块注册的配置声明 (用于UI生成)
+    static _plugins := Map()       ; 新增：存储所有发现的插件信息
 
     /**
      * [注册接口] 供所有Manager和插件在初始化时调用。
@@ -50,6 +51,13 @@ class ConfigService {
         }
         ; 深度合并，确保用户配置能覆盖默认值，同时所有键都存在
         this._config := this._DeepMerge(this._defaults, diskConfig)
+        if (this._config.Has("plugins")) {
+            for name, pluginInfo in this._plugins {
+                if (this._config.plugins.Has(name)) {
+                    pluginInfo.enabled := this._config.plugins[name]
+                }
+            }
+        }
     }
 
     /**
@@ -57,8 +65,12 @@ class ConfigService {
      */
     static Save() {
         try {
-            ; 使用缩进格式化输出，使其易于人类阅读和编辑
-            ; [API Syntax Writer for AutoHotkey AHK v1 or AHK V2 – the-Automator](https://www.the-automator.com/downloads/api-syntax-writer/){target="_blank" class="gpt-web-url"}
+            if (!this._config.Has("plugins")) {
+                this._config["plugins"] := Map()
+            }
+            for name, pluginInfo in this._plugins {
+                this._config.plugins[name] := pluginInfo.enabled
+            }
             FileOpen(this._configFilePath, "w", "UTF-8").Write(jsongo.Stringify(this._config, , 2))
         } catch Error as e {
             Error "Failed to save configuration file: " . e.Message
@@ -89,6 +101,9 @@ class ConfigService {
      */
     static Set(keyPath, value) {
         local keys := StrSplit(keyPath, ".")
+        if (keys[1] = "plugins" && keys.Length = 1) {
+            throw Error("不允许直接覆盖整个 'plugins' 配置节。请使用 SetPluginStatus 方法。")
+        }
         local current := this._config
         for i, key in keys {
             if (i == keys.Length) {
@@ -137,4 +152,61 @@ class ConfigService {
         }
         return merged
     }
+
+    /**
+     * 扫描插件清单，构建插件信息列表，并注册默认配置。
+     */
+    static LoadPluginManifests() {
+        ; [NEW LOGIC] 确保 _defaults 中有 plugins 这个键，以便 DeepMerge 能正常工作
+        this._defaults["plugins"] := Map()
+
+        Loop Files, APP_PLUGINS_DIR . "\*", "D" {
+            local manifestPath := A_LoopFileFullPath . "\manifest.json"
+            if !FileExist(manifestPath)
+                continue
+            try {
+                local manifest := jsongo.Parse(FileRead(manifestPath))
+                this._validateManifest(manifest)
+                local pluginName := manifest.name
+
+                this._plugins[pluginName] := Map(
+                    "name", pluginName,
+                    "version", manifest.version,
+                    "main", manifest.main,
+                    "dir", A_LoopFileFullPath,
+                    "enabled", true ; 这是一个临时的默认值
+                )
+
+                this._defaults.plugins[pluginName] := true
+
+                if (manifest.HasProp("settings")) {
+                    local defaults := Map()
+                    for key, spec in manifest.settings {
+                        if (spec.HasProp("default")) {
+                            defaults[key] := spec.default
+                        }
+                    }
+                    this.RegisterDefaults(pluginName, "settings", defaults, manifest.settings)
+                }
+
+                if manifest.HasProp("contributes") {
+                    this.RegisterDefaults(pluginName, "contributes", manifest.contributes)
+                }
+
+            } catch {
+                MsgBox "解析插件 manifest 文件失败: " . A_LoopFileName
+            }
+        }
+    }
+
+    static _validateManifest(manifest) {
+        required := ["name", "version", "main"]
+        for field in required {
+            if !manifest.HasProp(field) {
+                throw Error("Manifest 文件缺少必要字段: " . field)
+            }
+        }
+        return true
+    }
+
 }

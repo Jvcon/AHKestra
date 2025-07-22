@@ -10,11 +10,13 @@ global APP_PLUGINS_DIR := A_ScriptDir . "\Plugins"
 global APP_THEMES_DIR := A_ScriptDir . "\Themes"
 global APP_LIB_DIR := A_ScriptDir . "\Lib"
 
+defaultThemeName := "NordDark"
+defaultMenuKey := "#RButton"
+defaultLeaderKey := "Space"
 if (!DirExist(APP_THEMES_DIR))
     DirCreate(APP_THEMES_DIR)
 
-; 检查默认主题文件是否存在，不存在则创建，确保程序可以正常启动
-defaultThemePath := APP_THEMES_DIR . "\NordDark.json"
+defaultThemePath := APP_THEMES_DIR . "\" . defaultThemeName . ".json"
 if (!FileExist(defaultThemePath)) {
     ; 1. 将默认主题定义为原生的 AHK Map 对象，更易于维护
     defaultThemeMap := Map(
@@ -47,20 +49,22 @@ if (!FileExist(defaultThemePath)) {
     }
 }
 
+
 ; 引入核心库
 #Include <JSON>
 #Include <YAML>
 #Include <Monitors>
 
-#Include %A_ScriptDir%\Core\Services\EventService.ahk
+#Include %A_ScriptDir%\Core\Events\Events.ahk
 #Include %A_ScriptDir%\Core\Services\ContextService.ahk
 #Include %A_ScriptDir%\Core\Services\ConditionService.ahk
 #Include %A_ScriptDir%\Core\Services\ConfigService.ahk
 #Include %A_ScriptDir%\Core\Services\GuiService.ahk
 #Include %A_ScriptDir%\Core\Conditions.ahk
+#Include %A_ScriptDir%\Core\Errors.ahk
 
 
-#Include %A_ScriptDir%\Core\Managers\PluginManager.ahk
+#Include %A_ScriptDir%\Core\Managers\PluginService.ahk
 #Include %A_ScriptDir%\Core\Managers\HotkeyManager.ahk
 #Include %A_ScriptDir%\Core\Managers\ContextMenuManager.ahk
 #Include %A_ScriptDir%\Core\Managers\TextEngineManager.ahk
@@ -79,29 +83,32 @@ InitApp() {
     if (!DirExist(APP_PLUGINS_DIR))
         DirCreate(APP_PLUGINS_DIR)
 
+    guiDefaults := Map("activeTheme", defaultThemeName)
+    menuDefaults := Map("menuKey", defaultMenuKey)
+    hotkeyDefaults := Map("leaderKey",defaultLeaderKey , "timeout", 1000)
+    ConfigService.RegisterDefaults("ContextMenuManager", "settings", menuDefaults)
+    ConfigService.RegisterDefaults("HotkeyManager", "settings", hotkeyDefaults)
+    ConfigService.RegisterDefaults("GuiService", "settings", guiDefaults)
+   
+    ; 加载配置
+    ConfigService.Load()
+    EventLoaderService.LoadCoreProviders()
+
+
     EventService.Init()
     ConditionService.Init()
     GuiService.Init()
 
-    HotkeyManager.Init()
-    ContextMenuManager.Init()
-    TextEngineManager.Init()
     MonitorManager.Init()
 
     ; 加载插件
-    PluginManager.LoadPlugins()
+    PluginService.LoadPlugins()
 
-    ; 加载配置
-    ConfigService.Load()
 
-    HotkeyManager.Activate()
-    ContextMenuManager.Activate()
-    TextEngineManager.Activate()
-    MonitorManager.Activate()
+    HotkeyManager.Init()
+    ContextMenuManager.Init()
+    TextEngineManager.Init()
 
     ; 设置系统托盘
     TrayMenu.Init()
-
-    ; 触发应用启动事件
-    EventService.Trigger("App.Started")
 }
