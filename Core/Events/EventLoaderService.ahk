@@ -34,7 +34,7 @@ class EventLoaderService {
             this.LoadProviderFile(fullPath, pluginName)
         }
     }
-    
+
     /**
      * 加载单个事件提供者文件。
      * 核心逻辑是使用 #Include 来执行文件中的注册代码。
@@ -46,25 +46,22 @@ class EventLoaderService {
         if (!FileExist(providerFullPath) || this._loadedProviders.Has(providerFullPath)) {
             return
         }
-        
+
         try {
-            ; 动态传入参数给被#Include的文件，这是一个高级技巧
-            global _CURRENT_EVENT_PROVIDER_PATH := providerFullPath
-            global _CURRENT_EVENT_PRODUCER_NAME := producerName
-            
+            global _g_CurrentProviderClass := ""
+
             #Include %providerFullPath%
 
-            local className := StrReplace(A_LoopFileName, ".ahk")
-            if (IsObject(className) && className.Prototype is IEventProvider) {
-                local providerInstance := %className%()
+            if (IsObject(_g_CurrentProviderClass) && (_g_CurrentProviderClass.Prototype is IEventProvider)) {
+                local providerInstance :=  _g_CurrentProviderClass()
+
                 providerInstance.RegisterEvents(producerName)
                 this._loadedProviders[providerFullPath] := providerInstance
             }
         } catch Error as e {
             ; 记录加载失败的日志
         } finally {
-            _CURRENT_EVENT_PROVIDER_PATH := ""
-            _CURRENT_EVENT_PRODUCER_NAME := ""
+            _g_CurrentProviderClass := ""
         }
     }
 }

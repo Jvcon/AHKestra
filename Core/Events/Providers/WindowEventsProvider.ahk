@@ -62,3 +62,5 @@ class WindowEventsProvider extends IEventProvider {
         EventBus.Trigger("Window.Activated", {hWnd: hWnd})
     }
 }
+
+global _g_CurrentProviderClass := WindowEventsProvider
