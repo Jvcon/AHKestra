@@ -96,8 +96,8 @@ class HotkeyManager {
         local context := ContextService.GetContext()
         if this.Hotkeys.Has(keyStr) {
             for def in this.Hotkeys[keyStr] {
-                if ConditionService.Check(def.condition, context) {
-                    this.HandleCallback(def)
+                if Conditions.Check(def.condition, context) {
+                    this.HandleCallback(def,context)
                     return ; 执行第一个满足条件的，然后停止
                 }
             }
@@ -109,8 +109,8 @@ class HotkeyManager {
         local context := ContextService.GetContext()
         if this.LayeredHotkeys.Has(activator) && this.LayeredHotkeys[activator].Has(actionKey) {
             for def in this.LayeredHotkeys[activator][actionKey] {
-                if ConditionService.Check(def.condition, context) {
-                    this.HandleCallback(def)
+                if Conditions.Check(def.condition, context) {
+                    this.HandleCallback(def,context)
                     return ; 执行第一个满足条件的
                 }
             }
@@ -167,9 +167,9 @@ class HotkeyManager {
 
         if (currentNode.Has("_def")) {
             for def in currentNode["_def"] {
-                if ConditionService.Check(def, context) { ; 找到第一个满足条件的并执行
+                if Conditions.Check(def, context) { ; 找到第一个满足条件的并执行
                     this.SequenceHook.Stop()
-                    this.HandleCallback(def)
+                    this.HandleCallback(def,context)
                     return
                 }
             }
@@ -182,7 +182,7 @@ class HotkeyManager {
                 if (node.Has("_def")) {
                     ; 寻找一个在当前上下文可用的提示
                     for def in node["_def"] {
-                        if ConditionService.Check(def, context) {
+                        if Conditions.Check(def, context) {
                             hint := def.hint
                             isActionable := true
                             break
@@ -240,7 +240,7 @@ class HotkeyManager {
         return ""
     }
 
-    static HandleCallback(hotkeyInfo) {
+    static HandleCallback(hotkeyInfo,context) {
         if !IsObject(hotkeyInfo) {
             return ; 防御性编程
         }
@@ -250,7 +250,6 @@ class HotkeyManager {
                 KeystrokeDisplayGUI.Show(text)
                 SetTimer () => KeystrokeDisplayGUI.Hide(""), -1000
             }
-            local context := ContextService.GetContext()
             hotkeyInfo.callback(context)
         } catch Error as e {
             MsgBox "执行回调时出错: " e.Message "`n所在文件: " e.File "`n所在行: " e.Line

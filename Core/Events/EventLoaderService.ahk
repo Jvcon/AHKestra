@@ -54,7 +54,6 @@ class EventLoaderService {
 
             if (IsObject(_g_CurrentProviderClass) && (_g_CurrentProviderClass.Prototype is IEventProvider)) {
                 local providerInstance := _g_CurrentProviderClass()
-
                 providerInstance.RegisterEvents(producerName)
                 this._loadedProviders[providerFullPath] := providerInstance
             }

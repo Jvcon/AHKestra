@@ -34,12 +34,13 @@ class ConditionLoaderService {
         }
 
         try {
-            global _g_CurrentProviderClass := ""
+            global _g_CurrentConditionProviderClass := ""
 
             #Include %providerFullPath%
 
             if (IsObject(_g_CurrentConditionProviderClass) && (_g_CurrentConditionProviderClass.Prototype is IConditionProvider)) {
-                ConditionRegistry.Register(_g_CurrentConditionProviderClass)
+                local providerInstance := _g_CurrentProviderClass()
+                ConditionRegistry.Register(providerInstance)
             }
         } catch Error as e {
             ; 记录加载失败的日志

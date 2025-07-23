@@ -36,7 +36,7 @@ class ContextMenuManager {
         for itemDef in this.AllMenuItems {
             ; 检查条件是否满足
             local showItem := true
-            if ConditionService.Check(itemDef.condition,context) {
+            if Conditions.Check(itemDef.condition,context) {
                 try {
                     showItem := itemDef.condition(context)
                 } catch {
