@@ -1,0 +1,118 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AHKestra Plugin Manifest Schema V1",
+  "type": "object",
+  "properties": {
+    "manifestVersion": { "type": "integer", "const": 1 },
+    "name": { "type": "string" },
+    "version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+    "description": { "type": "string" },
+    "author": { "type": "string" },
+    "main": { "type": "string", "pattern": "\\*?.ahk" },
+    "configs": {
+      "type": "object",
+      "patternProperties": {
+        "^.+$": {
+          "$ref": "#/definitions/configItem"
+        }
+      }
+    },
+    "contributes": {
+      "type": "object",
+      "properties": {
+        "hotkeys": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/hotkey" }
+        },
+        "menuItems": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/menuItem" }
+        },
+        "espansions": {
+          "type": "array"
+        }
+      }
+    }
+  },
+  "required": ["manifestVersion", "name", "version", "main"],
+  "definitions": {
+    "hotkey": {
+      "type": "object",
+      "properties": {
+        "function": { "type": "string" },
+        "keys": { "type": "string" },
+        "type": { "type": "string" },
+        "hint": { "type": "string" },
+        "conditions": {
+          "type": "object",
+          "$ref": "#/definitions/condition"
+        }
+      },
+      "required": ["command", "keys"]
+    },
+    "menuItem": {
+      "type": "object",
+      "properties": {
+        "path": { "type": "string" },
+        "function": { "type": "string" },
+        "hint": { "type": "string" },
+        "conditions": {
+          "type": "object",
+          "$ref": "#/definitions/condition"
+        }
+      }
+    },
+    "condition": {},
+    "configItem": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["string", "boolean", "dropdown", "password", "file-picker"],
+          "description": "The data type and UI hint for the setting."
+        },
+        "default": {
+          "description": "The default value for the setting. Its type should match the 'type' field."
+        },
+        "label": {
+          "type": "string",
+          "description": "The user-friendly label displayed in the UI."
+        },
+        "description": {
+          "type": "string",
+          "description": "A detailed help text for the user."
+        },
+        "options": {
+          "type": "array",
+          "description": "A list of options for the 'dropdown' type.",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "properties": {
+              "label": { "type": "string" },
+              "value": { "type": "string" }
+            },
+            "required": ["label", "value"]
+          }
+        }
+      },
+      "required": ["type", "default", "label"],
+
+      "allOf": [
+        {
+          "if": {
+            "properties": { "type": { "const": "dropdown" } }
+          },
+          "then": {
+            "required": ["options"],
+            "properties": {
+              "default": {
+                "description": "Default value must be one of the option values."
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,5 +1,5 @@
 #Requires AutoHotkey v2.0
-#Include %A_ScriptDir%\Lib\yaml.ahk ; 引入YAML解析库
+#Include %A_ScriptDir%\Lib\Yaml.ahk ; 引入YAML解析库
 
 class TextEngineManager {
     static Expansions := Map() ; 存储从YAML解析的扩展规则: "trigger" => [def1, def2, ...]

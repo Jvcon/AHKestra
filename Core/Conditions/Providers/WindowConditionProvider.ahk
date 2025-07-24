@@ -23,9 +23,13 @@ class WindowConditionsProvider extends IConditionProvider {
 
         Switch conditionType {
             Case "WindowIsActive":
-                if (params.Has("process") && activeWindow.process != params.process) return false
-                    if (params.Has("title_contains") && !InStr(activeWindow.title, params.title_contains)) return false
-                        return true
+                if (params.Has("process") && activeWindow.process != params.process) {
+                    return false
+                }
+                if (params.Has("title_contains") && !InStr(activeWindow.title, params.title_contains)) {
+                    return false
+                }
+                return true
 
             Case "WindowExists":
                 local winTitle := "ahk_exe " (params.Has("process") ? params.process : "")

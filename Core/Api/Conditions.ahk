@@ -1,5 +1,4 @@
 #Include %A_ScriptDir%\..\Services\ConditionEngine.ahk
-#Include %A_ScriptDir%\..\API\Contexts.ahk
 
 class Conditions {
     /**

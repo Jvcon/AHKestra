@@ -17,16 +17,16 @@ class PluginApi {
     }
 
     ; --- ContextService API ---
-    Context := {
+    Contexts := {
         Get: () => ContextService.GetContext(),
         Invalidate: (scope) => ContextService.InvalidateContext(scope),
-        RegisterProvider: (processName, providerFunc) => ContextService.RegisterProvider(processName, providerFunc)
+        Register: (processName, providerFunc) => ContextRegistry.Register(processName, providerFunc)
     }
 
     ; --- ConditionService API ---
-    Condition := {
-        Check: (conditionExpression, context) => ConditionService.Check(conditionExpression, context),
-        Register: (name, func) => ConditionService.Register(name, func)
+    Conditions := {
+        Check: (conditionExpression, context) => Conditions.Check(conditionExpression, context),
+        Register: (name, func) => ConditionRegistry.Register(name, func)
     }
 
     ; --- ConfigService API (只读) ---
