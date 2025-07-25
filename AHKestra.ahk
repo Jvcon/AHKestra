@@ -51,24 +51,21 @@ if (!FileExist(defaultThemePath)) {
 
 
 ; 引入核心库
-#Include <JSON>
-#Include <YAML>
+#Include %A_ScriptDir%\Core\Common\Errors.ahk
 
-#Include %A_ScriptDir%\Core\Events\Events.ahk
-#Include %A_ScriptDir%\Core\Services\ContextService.ahk
-#Include %A_ScriptDir%\Core\Services\ConditionService.ahk
+#Include %A_ScriptDir%\Core\Api\Events.ahk
+#Include %A_ScriptDir%\Core\Api\Contexts.ahk
+#Include %A_ScriptDir%\Core\Api\Conditions.ahk
+
 #Include %A_ScriptDir%\Core\Services\ConfigService.ahk
 #Include %A_ScriptDir%\Core\Services\GuiService.ahk
-#Include %A_ScriptDir%\Core\Conditions.ahk
-#Include %A_ScriptDir%\Core\Errors.ahk
+#Include %A_ScriptDir%\Core\Services\PluginService.ahk
 
-
-#Include %A_ScriptDir%\Core\Managers\PluginService.ahk
 #Include %A_ScriptDir%\Core\Managers\HotkeyManager.ahk
 #Include %A_ScriptDir%\Core\Managers\ContextMenuManager.ahk
 #Include %A_ScriptDir%\Core\Managers\TextEngineManager.ahk
 
-#Include %A_ScriptDir%\Core\TrayMenu.ahk
+#Include %A_ScriptDir%\Core\Views\TrayMenu.ahk
 #Include %A_ScriptDir%\Core\Views\SettingsGui.ahk
 #Include %A_ScriptDir%\Core\Views\PluginConfigGuiFactory.ahk
 
