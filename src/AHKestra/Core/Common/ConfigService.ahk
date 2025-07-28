@@ -83,7 +83,7 @@ class ConfigService {
             for _, filePath in manifestPaths {
                 local originalManifest := PersistenceHelper.ReadJson(filePath)
                 local manifest := ManifestsMigration.Apply(originalManifest, this.latestSchemaVersion)
-                local validationResult := JsonValidator.Validate(schemaData, manifest)
+                local validationResult := JsonTools.Validate(schemaData, manifest)
 
                 if (validationResult.ok) {
                     ; 验证通过，加载插件信息

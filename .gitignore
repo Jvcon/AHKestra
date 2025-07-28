@@ -1,2 +1,4 @@
-./Plugins
-./config.json
+dist/
+build_output/
+**/bin/
+**/obj/
