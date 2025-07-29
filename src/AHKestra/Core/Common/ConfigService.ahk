@@ -93,10 +93,12 @@ class ConfigService {
                     this._plugins[pluginName] := {
                         info: { name: manifest.name, version: manifest.version, dir: fileDir, main: manifest.main },
                         status: "disabled",
-                        menuItems: manifest.Has("menuItems") ? manifest.menuItems : Map(),
-                        hotkeys: manifest.Has("hotkeys") ? manifest.hotkeys : Map(),
-                        espassions: manifest.Has("espassions") ? manifest.espassions : Map(),
-                        contributes: manifest.Has("contributes") ? manifest.contributes : Map(),
+                        menuItems: manifest.contributes.Has("menuItems") ? manifest.contributes.menuItems : Map(),
+                        hotkeys: manifest.contributes.Has("hotkeys") ? manifest.contributes.hotkeys : Map(),
+                        espassions: manifest.contributes.Has("espassions") ? manifest.contributes.espassions : Map(),
+                        events: manifest.providers.Has("events") ? manifest.providers.events : Map(),
+                        contexts: manifest.providers.Has("contexts") ? manifest.providers.contexts : Map(),
+                        conditions: manifest.providers.Has("conditions") ? manifest.providers.conditions : Map(),
                     }
                     if (manifest.Has("configs")) {
                         this._configSchemas[pluginName] := manifest.configs

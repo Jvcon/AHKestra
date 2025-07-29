@@ -21,27 +21,17 @@ class PluginService {
         if !IsObject(Plugin)
             throw Error("插件主文件中未定义 'Plugin' 类。")
 
-        pluginContext := {
-            name: pluginInfo.name,
-            version: pluginInfo.version,
-            dir: pluginInfo.dir,
-        }
+       
 
-        pluginInstance := Plugin(pluginContext)
         local api := PluginApi(pluginInfo.name)
         if (pluginInstance.HasMethod("Init")) {
-            pluginInstance.Init(api) ; 将 API 对象注入插件
+            pluginInstance.Init(pluginInfo,api) ; 将 API 对象注入插件
         }
 
         this.LoadedPlugins[pluginInfo.name] := pluginInstance
 
         local contributions := ConfigService.Get(pluginInfo.name . ".contributes")
         this.ProcessContributions(pluginInstance, pluginInfo, contributions)
-
-        ; 4. (可选) 调用插件的程序化初始化方法
-        if (pluginInstance.HasMethod("Init")) {
-            pluginInstance.Init()
-        }
 
         EventService.Trigger("Plugin.Loaded", pluginInfo.name)
     }
@@ -104,7 +94,7 @@ class PluginService {
             }
         }
 
-        if (contributions.Has("eventProviders")) {
+        if (contributions.Has("events")) {
             EventLoaderService.RegisterProvider(pluginInfo.name, pluginInfo.dir, contributions.eventProviders)
         }
     }

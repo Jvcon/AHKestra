@@ -1,7 +1,7 @@
 global APP_VERSION := "1.0.0", APP_NAME := "AHKestra"
 
 ;@Ahk2Exe-SetName AHKestra
-;@Ahk2Exe-SetDescription A context-aware automation toolbox for Windows
+;@Ahk2Exe-SetDescription The Context-Aware Automation Conductor for Windows
 ;@Ahk2Exe-SetVersion 0.0.1
 ;@Ahk2Exe-SetCopyright Jacques Yip
 ;@Ahk2Exe-SetOrigFilename AHKestra.exe

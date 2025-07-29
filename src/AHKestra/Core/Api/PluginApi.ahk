@@ -1,51 +1,33 @@
-; Core/PluginApi.ahk - 供插件使用的统一接口
-#Requires AutoHotkey v2.0
+class Api {
+    _pluginInfo := ""
 
-class PluginApi {
-    __New(pluginName) {
-        this.pluginName := pluginName
-        
-        ; 为插件提供一个带作用域的日志记录器
-        this.Log := (message) => {}
+    ; 构造函数，名称保持一致
+    __New(pluginInfo) {
+        this._pluginInfo := pluginInfo
     }
 
-    ; --- Events API ---
+    ; --- 日志模块 ---
+    Log := {
+        Info: (message) => PluginService.Log(this._pluginInfo.id, "INFO", message),
+        Warn: (message) => PluginService.Log(this._pluginInfo.id, "WARN", message),
+        Error: (message) => PluginService.Log(this._pluginInfo.id, "ERROR", message)
+    }
+
+    ; --- 事件模块 ---
     Events := {
-        On: (eventName, callback, target := "") => Events.On(event, callback, target := ""),
-        Off: (eventName, callback, target := "") => Events.Off(event, callback, target := ""),
-        Trigger: (eventName, data) => Events.Trigger(event, data)
+        On: (eventName, callback, target := "") => Events.On(eventName, callback, target),
+        Off: (eventName, callback, target := "") => Events.Off(eventName, callback, target),
+        Trigger: (eventName, data := "") => Events.Trigger(eventName, data)
     }
 
-    ; --- ContextService API ---
-    Contexts := {
-        Get: () => ContextService.GetContext(),
-        Invalidate: (scope) => ContextService.InvalidateContext(scope),
-        Register: (processName, providerFunc) => ContextRegistry.Register(processName, providerFunc)
-    }
-
-    ; --- ConditionService API ---
-    Conditions := {
-        Check: (conditionExpression, context) => Conditions.Check(conditionExpression, context),
-        Register: (name, func) => ConditionRegistry.Register(name, func)
-    }
-
-    ; --- ConfigService API (只读) ---
+    ; --- 配置模块 (隐式上下文) ---
     Config := {
-        Get: (key) => ConfigService.Get(this.pluginName . ".settings." . key),
+        Get: (key, defaultValue := "") => ConfigService.GetConfigValue(this._pluginInfo.id, key, defaultValue)
     }
 
-    ; --- GuiService API ---
+    ; --- GUI模块 (隐式上下文) ---
     Gui := {
-        CreateThemedWindow: (options, title) => GuiService.CreateThemedWindow(options, title),
-        ShowSingletonWindow: (name, creationFunc) => GuiService.ShowSingletonWindow(this.pluginName . "_" . name, creationFunc),
-        ShowConfiguration: (this, ownerHwnd := 0) => PluginConfigGuiFactory.CreateAndShow(this.context.name, ownerHwnd),
-    }
-
-    ; --- MonitorManager API ---
-    Monitors := {
-        GetAll: () => MonitorManager.GetAll(),
-        GetPrimary: () => MonitorManager.GetPrimary(),
-        GetFromWindow: (hwnd) => MonitorManager.GetFromWindow(hwnd),
-        SetBrightness: (index, value) => MonitorManager.SetBrightness(index, value)
+        ShowNotification: (text) => GuiService.ShowNotification(text),
+        ShowConfiguration: (ownerHwnd := 0) => GuiService.ShowPluginConfiguration(this._pluginInfo.id, ownerHwnd)
     }
 }
