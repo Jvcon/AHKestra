@@ -1,0 +1,20 @@
+{
+  "name": "Dracula",
+  "colors": {
+    "background": "282a36",
+    "foreground": "f8f8f2",
+    "primary": "bd93f9",
+    "secondary": "ff79c6",
+    "text": "f8f8f2",
+    "accent": "50fa7b",
+    "error": "ff5555",
+    "warning": "f1fa8c",
+    "info": "8be9fd",
+    "success": "50fa76"
+  },
+  "fonts": {
+    "primary": "Segoe UI",
+    "size": 10,
+    "titleSize": 14
+  }
+}

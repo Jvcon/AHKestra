@@ -1,0 +1,20 @@
+{
+  "name": "Nord Dark",
+  "author": "Arctic Ice Studio",
+  "colors": {
+    "primary": "88C0D0",
+    "secondary": "81A1C1",
+    "background": "2E3440",
+    "text": "ECEFF4",
+    "accent": "5E81AC",
+    "error": "BF616A",
+    "warning": "D08770",
+    "success": "A3BE8C",
+    "border": "4C566A"
+  },
+  "fonts": {
+    "primary": "Segoe UI",
+    "size": 10,
+    "titleSize": 14
+  }
+}

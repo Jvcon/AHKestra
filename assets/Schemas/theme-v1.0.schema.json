@@ -1,0 +1,42 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AHKestra Theme Schema",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "The name of the theme."
+    },
+    "version": {
+      "type": "string",
+      "description": "The version of the theme."
+    },
+    "author": {
+      "type": "string",
+      "description": "The author of the theme."
+    },
+    "description": {
+      "type": "string",
+      "description": "A brief description of the theme."
+    },
+    "colors": {
+      "type": "object",
+      "description": "Defines the color palette for the theme.",
+      "patternProperties": {
+        "^(primary|secondary|background|text|accent|error|warning|success|border)$": {
+          "$ref": "#/definitions/color"
+        }
+      },
+      "additionalProperties": true,
+      "required": ["primary", "secondary", "background", "text"]
+    }
+  },
+  "definitions": {
+    "color": {
+      "type": "string",
+      "description": "Color hex code (3 or 6 digits, without the leading '#').",
+      "pattern": "^([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$"
+    }
+  },
+  "required": ["name", "colors", "fonts"]
+}

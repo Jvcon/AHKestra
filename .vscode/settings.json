@@ -2,9 +2,9 @@
     "json.schemas": [
         {
             "fileMatch": [
-                "test.json"
+                "./assets/Themes/*.json"
             ],
-            "url": "./Core/Plugins/plugin.schema.json"
+            "url": "./assets/Schemas/theme-v1.0.schema.json"
         }
     ]
 }
