@@ -15,7 +15,7 @@ class TextEngineManager {
      * 由 PluginService 调用，从 YAML 文件中解析并注册文本扩展。
      * @param yamlPath {String} YAML 文件的完整路径。
      */
-    static RegisterExpansionFromYaml(yamlPath) {
+    static RegisterExpansionFromYaml(yamlPath, pluginName) {
         try {
             local yamlContent := FileRead(yamlPath)
             local parsed := Yaml.Load(yamlContent)
@@ -37,12 +37,41 @@ class TextEngineManager {
 
                     this.Expansions[trigger].Push({
                         replace: match.replace,
-                        condition: condition
+                        condition: condition,
+                        plugin: pluginName
                     })
                 }
             }
         } catch Error as e {
             MsgBox "解析或注册 Espanso 配置文件失败: " . yamlPath . "`n" . e.Message
+        }
+    }
+
+    /**
+     * [核心] 注销一个插件贡献的所有文本扩展。
+     * @param pluginName {String} 要注销其扩展的插件名称。
+     */
+    static Unregister(pluginName) {
+        local triggersToReEvaluate := Map()
+
+        ; 步骤1: 遍历所有扩展，移除属于目标插件的定义
+        for trigger, definitions in this.Expansions {
+            loop definitions.Length {
+                local index := definitions.Length - A_Index + 1
+                local def := definitions[index]
+                if (def.Has("plugin") && def.plugin == pluginName) {
+                    definitions.RemoveAt(index)
+                    triggersToReEvaluate.Push(trigger)
+                }
+            }
+        }
+
+        ; 步骤2: 重新评估那些被修改过的trigger，如果其定义列表已空，则关闭原生Hotstring
+        for trigger in triggersToReEvaluate {
+            if (this.Expansions.Has(trigger) && this.Expansions[trigger].Length == 0) {
+                Hotstring(trigger, "Off") ; 关闭原生热字符串
+                this.Expansions.Delete(trigger) ; 从Map中移除这个键
+            }
         }
     }
 

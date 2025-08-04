@@ -61,6 +61,34 @@ class ConfigService {
         this.Save() ; 每次修改配置后立即保存
     }
 
+     /**
+     * [公共API] 设置一个插件的状态并立即持久化。
+     * 这是框架中唯一应该用来改变插件启用/禁用状态的地方。
+     * @param pluginName {String} 插件的名称。
+     * @param newStatus {String} 新的状态 ("enabled" 或 "disabled")。
+     */
+    static SetPluginStatus(pluginName, newStatus) {
+        if (!this._plugins.Has(pluginName)) {
+            return
+        }
+        this._plugins[pluginName].status := newStatus
+        try {
+            ; 为了健壮性，我们读取最新的state文件，只修改需要的条目，然后写回
+            local stateData := PersistenceHelper.ReadJson(this._stateFilePath)
+            if (!IsObject(stateData)) {
+                stateData := Map() ; 如果文件为空或损坏，则创建一个新的
+            }
+            if (!stateData.Has("plugins")) {
+                stateData["plugins"] := Map()
+            }
+            stateData.plugins[pluginName] := Map("status", newStatus)
+
+            PersistenceHelper.WriteJson(this._stateFilePath, stateData)
+        } catch e {
+            Error("保存插件状态失败: " . e.Message)
+        }
+    }
+
     /**
      * 扫描插件清单，构建插件信息列表。
      */

@@ -26,6 +26,23 @@ class ContextMenuManager {
     }
 
     /**
+     * [核心] 注销一个插件贡献的所有菜单项。
+     * @param pluginName {String} 要注销其菜单项的插件名称。
+     */
+    static Unregister(pluginName) {
+        ; 我们从后向前遍历数组，这样在删除元素时不会影响后续元素的索引。
+        ; 这是在迭代中修改数组的安全做法。
+        loop this.AllMenuItems.Length {
+            local index := this.AllMenuItems.Length - A_Index + 1
+            local itemDef := this.AllMenuItems[index]
+
+            if (itemDef.plugin == pluginName) {
+                this.AllMenuItems.RemoveAt(index)
+            }
+        }
+    }
+
+    /**
      * 构建并显示上下文菜单。
      */
     static BuildAndShowMenu() {

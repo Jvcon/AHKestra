@@ -1,4 +1,4 @@
-class Api {
+class PluginApi {
     _pluginInfo := ""
 
     ; 构造函数，名称保持一致
@@ -8,9 +8,9 @@ class Api {
 
     ; --- 日志模块 ---
     Log := {
-        Info: (message) => PluginService.Log(this._pluginInfo.id, "INFO", message),
-        Warn: (message) => PluginService.Log(this._pluginInfo.id, "WARN", message),
-        Error: (message) => PluginService.Log(this._pluginInfo.id, "ERROR", message)
+        Info: (message) => PluginService.Log(this._pluginInfo.name, "INFO", message),
+        Warn: (message) => PluginService.Log(this._pluginInfo.name, "WARN", message),
+        Error: (message) => PluginService.Log(this._pluginInfo.name, "ERROR", message)
     }
 
     ; --- 事件模块 ---
@@ -22,12 +22,12 @@ class Api {
 
     ; --- 配置模块 (隐式上下文) ---
     Config := {
-        Get: (key, defaultValue := "") => ConfigService.GetConfigValue(this._pluginInfo.id, key, defaultValue)
+        Get: (key, defaultValue := "") => ConfigService.GetConfigValue(this._pluginInfo.name, key, defaultValue)
     }
 
     ; --- GUI模块 (隐式上下文) ---
     Gui := {
         ShowNotification: (text) => GuiService.ShowNotification(text),
-        ShowConfiguration: (ownerHwnd := 0) => GuiService.ShowPluginConfiguration(this._pluginInfo.id, ownerHwnd)
+        ShowConfiguration: (ownerHwnd := 0) => GuiService.ShowPluginConfiguration(this._pluginInfo.name, ownerHwnd)
     }
 }
