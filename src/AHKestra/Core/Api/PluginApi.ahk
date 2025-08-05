@@ -1,3 +1,7 @@
+#Include <Core\Api\Events>
+#Include <Core\Api\Contexts>
+#Include <Core\Api\Conditions>
+
 class PluginApi {
     _pluginInfo := ""
 
@@ -18,6 +22,16 @@ class PluginApi {
         On: (eventName, callback, target := "") => Events.On(eventName, callback, target),
         Off: (eventName, callback, target := "") => Events.Off(eventName, callback, target),
         Trigger: (eventName, data := "") => Events.Trigger(eventName, data)
+    }
+
+    ; --- 上下文模块 ---
+    Contexts := {
+        GetCurrent: ()=> Contexts.GetCurrent()
+    }
+
+    ; --- 条件模块 ---
+    Conditions := {
+        Check: (conditionExpression,context) => Conditions.Check(conditionExpression, context)
     }
 
     ; --- 配置模块 (隐式上下文) ---

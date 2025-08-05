@@ -22,6 +22,7 @@ class PluginService {
             if (pluginInstance.status == "enabled") {
                 ConfigService.SetPluginStatus(pluginName, "enabled")
             }
+            this._registerContributions(pluginInstance)
         }
     }
 
@@ -36,6 +37,7 @@ class PluginService {
             if (pluginInstance.status != "enabled") {
                 ConfigService.SetPluginStatus(pluginName, "disabled")
             }
+            this._unregisterContributions(pluginInstance)
         }
     }
 
@@ -153,18 +155,13 @@ class PluginService {
 
     /**
      * 核心注销逻辑：清理一个插件注册的所有能力。
-     * 【重要】这个方法依赖于各个Manager提供对应的Unregister功能。
      * @param pluginInstance {Plugin} 即将被停用的插件实例。
      */
     static _unregisterContributions(pluginInstance) {
         local pluginName := pluginInstance.info.name
-
-        ; TODO: 为 HotkeyManager, ContextMenuManager, TextEngineManager 添加 Unregister(pluginName) 方法。
-        ; HotkeyManager.Unregister(pluginName)
-        ; ContextMenuManager.Unregister(pluginName)
-        ; TextEngineManager.Unregister(pluginName)
-
-        ; 这是实现插件热重载和动态启停的关键一步。
+        HotkeyManager.Unregister(pluginName)
+        ContextMenuManager.Unregister(pluginName)
+        TextEngineManager.Unregister(pluginName)
     }
 
     /**
